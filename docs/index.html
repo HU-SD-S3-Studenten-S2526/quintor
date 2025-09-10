@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Portfolio · Sprint 0</title>
+  <link rel="stylesheet" href="./style.css" />
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+  mermaid.run({ querySelector: '.mermaid' });
+</script>
+</head>
+<body>
+  <main>
+    <h1>Sprint 0</h1>
+
+    <h2>Impressie</h2>
+    <p>
+      We bouwen een centrale declaratie-webapp (Werknemer → Manager → Office → Finance → Loonstrook).
+      Doel: sneller, transparanter, minder fouten en iedereen ziet altijd de status.
+    </p>
+
+<h2>Visie (v1)</h2>
+
+<h3>Probleem</h3>
+<ul>
+  <li>Declaraties gaan nu via losse e-mails/appjes → traag, foutgevoelig, nergens één bron van waarheid.</li>
+  <li>Medewerkers zien de status niet; managers/office besteden veel tijd aan doorsturen en terugkoppelen.</li>
+  <li>Er is geen eenduidige workflow of audittrail; documenten raken kwijt of zijn onvolledig.</li>
+</ul>
+
+<h3>Doel (waarom & wat levert het op)</h3>
+<ul>
+  <li>Één centrale webapp waar iedereen zijn/haar declaraties indient, beoordeelt en volgt.</li>
+  <li>Doorlooptijd omlaag (streef: &lt; 10 werkdagen) en minder rework door standaardvalidaties.</li>
+  <li>Transparantie: realtime status + tijdlijn (wie/wat/wanneer) → minder vragen en mails.</li>
+</ul>
+
+<h3>Voor wie</h3>
+<ul>
+  <li><strong>Medewerker</strong> – indienen + status volgen + aanvullen op verzoek.</li>
+  <li><strong>Manager</strong> – beoordelen (goed/af met reden), nooit eigen declaratie.</li>
+  <li><strong>Office</strong> – controle, info vragen, doorzetten naar Finance.</li>
+  <li><strong>Finance</strong> – koppelen aan loonstrookmaand + export.</li>
+</ul>
+
+<h3>Oplossing (kernidee)</h3>
+<ul>
+  <li>Gestandaardiseerd formulier (categorie, datum, bedrag, beschrijving, uploads) met validaties.</li>
+  <li>Vaste workflow: Werknemer → Manager → Office → Finance, met duidelijke statusovergangen.</li>
+  <li>Notificaties bij statuswijzigingen en een tijdlijn per declaratie (audittrail).</li>
+</ul>
+
+<h3>MVP (eerste versie die waarde levert)</h3>
+<ul>
+  <li><strong>Auth</strong>: mock login + rolgebaseerde schermen (SSO optioneel later).</li>
+  <li><strong>Medewerker</strong>: nieuwe declaratie indienen (min. 1 bijlage), lijst + detail + intrekken (tot Finance).</li>
+  <li><strong>Manager</strong>: goedkeuren/afwijzen met verplichte reden; niet op eigen items.</li>
+  <li><strong>Office</strong>: “info gevraagd” of “doorzetten naar Finance”.</li>
+  <li><strong>Finance</strong>: markeer “op loonstrook (maand)” + eenvoudige CSV-export.</li>
+  <li><strong>Globaal</strong>: zoeken/filteren, statusbadges, tijdlijn, toegankelijk en mobielvriendelijk.</li>
+</ul>
+
+<h3>Scope & out-of-scope (v1)</h3>
+<ul>
+  <li>In scope: parkeren/boek/cursus, basisprioriteit (normaal/hoog), CSV-export per periode.</li>
+  <li>Out of scope (later): SSO productie, regels/limieten per categorie, meertaligheid, uitgebreide rapportages.</li>
+</ul>
+
+<h3>Succescriteria / KPI’s</h3>
+<ul>
+  <li>100% van ingediende declaraties heeft een zichtbare status + tijdlijn.</li>
+  <li>Doorlooptijd &minus;30% t.o.v. huidige werkwijze.</li>
+  <li>&gt;= 90% uploads voldoen in één keer aan de validaties (minder rework).</li>
+</ul>
+
+
+<h2 id="requirements">Requirements ter ondersteuning van onze visie en planning</h2>
+
+<h3>Functionele Requirements</h3>
+<ul>
+  <li><strong>Inloggen/SSO</strong> – Gebruikers kunnen inloggen met bedrijfs-SSO; als fallback mag lokale login (e-mail + wachtwoord) gebruikt worden.</li>
+  <li><strong>Rollen &amp; rechten</strong> – Rollen: <em>Medewerker</em>, <em>Manager</em>, <em>Office/HR</em>, <em>Finance</em>. Ieder ziet alleen de eigen schermen en acties.</li>
+  <li><strong>Declaratie indienen</strong> – Formulier met categorie (Parkeren/Boek/Cursus), datum, bedrag, beschrijving en bijlage(n).
+      Minimaal 1 bijlage verplicht (JPG/PNG/PDF, max 5MB, max 3 bestanden).</li>
+  <li><strong>Workflow</strong> – Na indienen loopt de flow automatisch: Manager &rarr; Office/HR &rarr; Finance &rarr; Loonstrook.</li>
+  <li><strong>Zelf-keuren blokkeren</strong> – Een manager kan nooit zijn/haar eigen declaratie beoordelen; het systeem routeert naar een andere manager.</li>
+  <li><strong>Beoordelen</strong> – Manager kan goedkeuren/afwijzen (reden verplicht). Office/HR kan controleren, terugsturen of doorzetten.
+      Finance kan markeren voor loonstrook (maand kiezen).</li>
+  <li><strong>Status &amp; tijdlijn</strong> – Elke declaratie toont een statusbadge en tijdlijn (ingediend, bij manager, bij office, bij finance, op loonstrook/afgewezen) met datum/tijd + actor.</li>
+  <li><strong>Zoeken &amp; filteren</strong> – Lijsten zijn te filteren op status, categorie, datumrange en te zoeken op declaratienummer.</li>
+  <li><strong>Urgentie &amp; deadlines</strong> – Declaratie kan prioriteit (normaal/hoog) krijgen; deadlines en achterstallige items worden visueel gemarkeerd.</li>
+  <li><strong>Export Finance</strong> – Finance kan per periode een CSV-export maken (nr, gebruiker, categorie, datum, bedrag, status, opmerking).</li>
+</ul>
+
+<h3>Niet-Functionele Requirements</h3>
+<ul>
+  <li><strong>Snelheid</strong> – Eerste laadtijd ≤ 2,5s; filter/zoek-acties ≤ 200ms bij lijsten tot 500 items.</li>
+  <li><strong>Toegankelijkheid</strong> – UI voldoet aan WCAG 2.1 AA (focus, labels, contrast, toetsenbord, ARIA).</li>
+  <li><strong>Beveiliging (client)</strong> – Invoer wordt gesanitized (XSS), geen gevoelige data in URL’s; rolchecks in UI (server blijft bron van waarheid).</li>
+  <li><strong>Privacy/AVG</strong> – Alleen noodzakelijke gegevens tonen; uploads worden veilig verstuurd en behandeld volgens AVG (server-policies).</li>
+  <li><strong>Beschikbaarheid</strong> – Frontend functioneert ook bij tijdelijke API-storingen met duidelijke foutmeldingen en retry voor uploads.</li>
+  <li><strong>Responsiveness</strong> – Werkt goed op mobiel, tablet, desktop.</li>
+  <li><strong>Browser support</strong> – Laatste 2 versies van Chrome, Edge, Firefox, Safari (incl. mobiel).</li>
+  <li><strong>Onderhoudbaarheid</strong> – Vanilla Web Components, code gestyled met Prettier en gecontroleerd met ESLint; componenten herbruikbaar.</li>
+  <li><strong>Schaalbaarheid UI</strong> – Lijsten blijven soepel tot 5.000 items (paginatie/virtualisatie).</li>
+  <li><strong>Auditability</strong> – Elke actie toont wie/wat/wanneer in de tijdlijn (audittrail zichtbaar in UI).</li>
+</ul>
+
+<h2 id="user-stories">User stories ter ondersteuning van onze visie en planning</h2>
+
+<h3>Account &amp; Toegang</h3>
+
+<h4>US-01 Inloggen (SSO of lokaal)</h4>
+<p>Als medewerker wil ik kunnen inloggen met SSO of e-mail/wachtwoord, zodat ik bij mijn declaraties kan.</p>
+<ul>
+  <li><em>Gegeven</em> dat ik op de inlogpagina ben</li>
+  <li><em>Wanneer</em> ik succesvol inlog (SSO of lokaal)</li>
+  <li><em>Dan</em> word ik als geauthenticeerde gebruiker herkend.</li>
+</ul>
+
+<h4>US-02 Na login naar dashboard</h4>
+<p>Als gebruiker wil ik na inloggen direct naar mijn dashboard, zodat ik snel overzicht heb.</p>
+<ul>
+  <li><em>Gegeven</em> dat ik ingelogd ben</li>
+  <li><em>Wanneer</em> de login slaagt</li>
+  <li><em>Dan</em> kom ik uit op <code>/dashboard</code> met mijn eigen overzicht.</li>
+</ul>
+
+<h3>Declaraties indienen &amp; beheren</h3>
+
+<h4>US-03 Declaratie indienen</h4>
+<p>Als medewerker wil ik een nieuwe declaratie indienen met categorie, datum, bedrag, beschrijving en bon-upload, zodat ik kosten kan terugvragen.</p>
+<ul>
+  <li><em>Gegeven</em> dat ik het formulier invul (incl. min. 1 bijlage)</li>
+  <li><em>Wanneer</em> ik op <em>Indienen</em> klik</li>
+  <li><em>Dan</em> wordt de declaratie opgeslagen met status “Ingediend”.</li>
+</ul>
+
+<h4>US-04 Status &amp; tijdlijn zien</h4>
+<p>Als medewerker wil ik de status en tijdlijn van elke declaratie zien, zodat ik weet waar mijn aanvraag is in het proces.</p>
+<ul>
+  <li><em>Gegeven</em> een bestaande declaratie</li>
+  <li><em>Wanneer</em> ik de detailpagina open</li>
+  <li><em>Dan</em> zie ik de actuele status en een tijdlijn met stappen en tijdstempels.</li>
+</ul>
+
+<h4>US-05 Declaratie intrekken</h4>
+<p>Als medewerker wil ik een declaratie kunnen intrekken zolang Finance niet heeft verwerkt, zodat ik fouten kan herstellen.</p>
+<ul>
+  <li><em>Gegeven</em> dat de declaratie nog niet op loonstrook staat</li>
+  <li><em>Wanneer</em> ik <em>Intrekken</em> kies</li>
+  <li><em>Dan</em> gaat de status naar “Ingetrokken” en stopt de workflow.</li>
+</ul>
+
+<h4>US-06 Urgentie</h4>
+<p>Als medewerker wil ik een urgentievlag kunnen zetten, zodat spoed sneller wordt behandeld.</p>
+<ul>
+  <li><em>Gegeven</em> dat ik een declaratie indien</li>
+  <li><em>Wanneer</em> ik <em>Prioriteit = Hoog</em> kies</li>
+  <li><em>Dan</em> wordt de declaratie visueel gemarkeerd en in lijsten bovenaan getoond.</li>
+</ul>
+
+<h3>Beoordelen (Manager)</h3>
+
+<h4>US-07 Overzicht te beoordelen items</h4>
+<p>Als manager wil ik een overzicht van te beoordelen declaraties met filter/zoek, zodat ik efficiënt kan werken.</p>
+<ul>
+  <li><em>Gegeven</em> openstaande items</li>
+  <li><em>Wanneer</em> ik filter op status/categorie of zoek op nummer</li>
+  <li><em>Dan</em> toont de lijst direct de gefilterde resultaten.</li>
+</ul>
+
+<h4>US-08 Goedkeuren/Afwijzen met reden</h4>
+<p>Als manager wil ik goedkeuren/afwijzen met verplichte reden, zodat beslissingen traceerbaar zijn.</p>
+<ul>
+  <li><em>Gegeven</em> een te beoordelen item</li>
+  <li><em>Wanneer</em> ik <em>Afwijzen</em> of <em>Goedkeuren</em> kies</li>
+  <li><em>Dan</em> moet ik (bij afwijzen) een reden invoeren en wordt de tijdlijn bijgewerkt.</li>
+</ul>
+
+<h4>US-09 Geen zelf-keuring</h4>
+<p>Als manager wil ik mijn eigen declaraties niet kunnen beoordelen, zodat belangenverstrengeling wordt voorkomen.</p>
+<ul>
+  <li><em>Gegeven</em> mijn eigen declaratie</li>
+  <li><em>Wanneer</em> ik het beoordeelvenster open</li>
+  <li><em>Dan</em> zijn goedkeuren/afwijzen niet beschikbaar en wordt dit duidelijk gecommuniceerd.</li>
+</ul>
+
+<h3>Controle (Office/HR)</h3>
+
+<h4>US-10 Controleren/terugsturen/doorzetten</h4>
+<p>Als Office/HR wil ik declaraties controleren, terugsturen met opmerking of doorzetten naar Finance, zodat de kwaliteit geborgd is.</p>
+<ul>
+  <li><em>Gegeven</em> een door de manager goedgekeurde declaratie</li>
+  <li><em>Wanneer</em> ik <em>Doorzetten</em> of <em>Terugsturen</em> kies</li>
+  <li><em>Dan</em> wordt de status en tijdlijn overeenkomstig bijgewerkt (incl. opmerking).</li>
+</ul>
+
+<h3>Verwerken (Finance)</h3>
+
+<h4>US-11 Loonstrook + CSV</h4>
+<p>Als Finance wil ik declaraties aan een loonstrook-maand koppelen en een CSV-export kunnen maken, zodat uitbetaling kan plaatsvinden.</p>
+<ul>
+  <li><em>Gegeven</em> een gecontroleerde declaratie</li>
+  <li><em>Wanneer</em> ik een maand selecteer en op <em>Verwerken</em> klik</li>
+  <li><em>Dan</em> krijgt de declaratie status “Op loonstrook (maand)” en kan ik CSV downloaden.</li>
+</ul>
+
+<h3>Zoeken, filteren &amp; notificaties</h3>
+
+<h4>US-12 Snel vinden</h4>
+<p>Als gebruiker wil ik zoeken op declaratienummer en filteren op status/categorie/datum, zodat ik snel vind wat ik nodig heb.</p>
+<ul>
+  <li><em>Gegeven</em> een lijst met declaraties</li>
+  <li><em>Wanneer</em> ik een zoekterm/filters toepas</li>
+  <li><em>Dan</em> zie ik direct de bijbehorende subset.</li>
+</ul>
+
+<h4>US-13 Notificaties</h4>
+<p>Als gebruiker wil ik notificaties krijgen bij statuswijzigingen, zodat ik direct op de hoogte ben.</p>
+<ul>
+  <li><em>Gegeven</em> mijn ingediende declaratie</li>
+  <li><em>Wanneer</em> de status verandert</li>
+  <li><em>Dan</em> ontvang ik een melding (in-app en/of e-mail).</li>
+</ul>
+
+<h3>Toegankelijkheid &amp; UX</h3>
+
+<h4>US-14 Toegankelijk (WCAG)</h4>
+<p>Als gebruiker met een visuele beperking wil ik duidelijke labels, focus-states en voldoende contrast, zodat ik de app goed kan gebruiken.</p>
+<ul>
+  <li><em>Gegeven</em> de UI</li>
+  <li><em>Wanneer</em> ik navigeer met toetsenbord/screenreader</li>
+  <li><em>Dan</em> zijn alle elementen bereikbaar en begrijpelijk (WCAG 2.1 AA).</li>
+</ul>
+
+<h4>US-15 Foutmeldingen &amp; lege staten</h4>
+<p>Als nieuwe gebruiker wil ik duidelijke foutmeldingen en lege-staat hints, zodat ik weet wat ik moet doen.</p>
+<ul>
+  <li><em>Gegeven</em> een lege lijst of validatiefout</li>
+  <li><em>Wanneer</em> dit optreedt</li>
+  <li><em>Dan</em> zie ik een korte uitleg + actieknop (bijv. “Maak een declaratie aan”).</li>
+</ul>
+
+<h3>Technisch/Beheer</h3>
+
+<h4>US-16 Security</h4>
+<p>Als security officer wil ik dat invoer wordt gesanitiseerd en rolacties worden gevalideerd, zodat misbruik wordt voorkomen.</p>
+<ul>
+  <li><em>Gegeven</em> gebruikersinvoer</li>
+  <li><em>Wanneer</em> data wordt verwerkt/getoond</li>
+  <li><em>Dan</em> is XSS/HTML-injectie geneutraliseerd en rolrechten zijn afgedwongen.</li>
+</ul>
+
+<h4>US-17 Audittrail</h4>
+<p>Als product owner wil ik een audittrail in de tijdlijn, zodat we achteraf acties kunnen controleren.</p>
+<ul>
+  <li><em>Gegeven</em> elke wijziging</li>
+  <li><em>Wanneer</em> er een actie wordt uitgevoerd</li>
+  <li><em>Dan</em> wordt wie/wat/wanneer vastgelegd en zichtbaar in de detailweergave.</li>
+</ul>
+
+<h3>Acceptatiecriteria (MVP samenvatting)</h3>
+<ul>
+  <li>Een medewerker kan een declaratie met min. 1 geldige bijlage indienen en de actuele status + tijdlijn zien.</li>
+  <li>Een manager kan beoordelen met (indien afwijzing) verplichte reden; geen zelfkeuring mogelijk.</li>
+  <li>Office kan info vragen of doorzetten; Finance kan koppelen aan een loonstrookmaand en CSV exporteren.</li>
+</ul>
+
+<h2 id="voorvereisten">Voorvereisten (Checklist)</h2>
+
+<h3>Administratief</h3>
+<ul>
+  <li>✅ <strong>Opdrachtgever & contact</strong>: Dauwe Schimmel (Quintor) • kanaal: e-mail/Mattermost</li>
+  <li>✅ <strong>Scope Sprint 0</strong> afgestemd: visie v1, flow, wireframes, portfolio live</li>
+  <li>✅ <strong>Teamrollen</strong> bekend: Frontend-gilde (ik) + overige rollen (backend gilde, analist)</li>
+  <li>✅ <strong>Definition of Ready / Done</strong> vastgelegd (zie secties hieronder)</li>
+  <li>✅ <strong>Risico’s & aannames</strong> genoteerd met acties (SSO fallback, richtlijnen, scope)</li>
+</ul>
+
+<h3>Technisch</h3>
+<ul>
+  <li>✅ <strong>Repository</strong> privé, docent als collaborator: 
+    <a href="https://github.com/parsamhx/quintor-portfolio" target="_blank" rel="noopener">github.com/parsamhx/quintor-portfolio</a>
+  </li>
+  <li>✅ <strong>GitHub Pages</strong> actief (branch <code>main</code> → folder <code>/docs</code>): 
+    <a href="https://parsamhx.github.io/quintor-portfolio/" target="_blank" rel="noopener">live site</a>
+  </li>
+  <li>✅ <strong>Portfolio inhoud</strong>: Visie, Requirements, Swimlane (Mermaid), Wireframes-links, DoR/DoD, Plan</li>
+  <li>✅ <strong>Bestandsstructuur</strong>: <code>/docs</code> (site), later <code>/src</code> (code)</li>
+  <li>🟡 <strong>Tooling</strong> (Sprint-1): Prettier + ESLint (eslint-config-prettier), simple CI check</li>
+  <li>🟡 <strong>Issue workflow</strong>: GitHub Issues met labels <code>feature</code>/<code>bug</code>/<code>chore</code>; 1 demo-issue aangemaakt</li>
+</ul>
+
+
+<h2 id="stats">Stats</h2>
+<ul>
+  <li><strong>Stack (gepland)</strong>: Vite + Vanilla Web Components, modules/ESM</li>
+  <li><strong>Lint/Format (Sprint-1)</strong>: ESLint + Prettier • stijl: single quotes, no semicolons (config in repo)</li>
+  <li><strong>Diagram</strong>: Mermaid v10 (dark) • Swimlane v0.1 op deze pagina</li>
+  <li><strong>Statusmodel</strong>:
+    <code>INGEDIEND</code> → <code>GOEDGEKEURD_MANAGER</code> → <code>INFO_GEVRAAGD_OFFICE</code> → 
+    <code>DOORGEZET_NAAR_FINANCE</code> → <code>OP_LOONSTROOK</code> / <code>AFGEKEURD</code>
+  </li>
+  <li><strong>User stories</strong>: 17 v1 (account, indienen, beoordelen, finance, zoeken/notificaties, toegankelijkheid, security)</li>
+  <li><strong>Bewijs Sprint-0</strong>: 2 wireframes (Inloggen & Account aanmaken) + requirements en user stories opgesteld.</li>
+  <li><strong>MVP Sprint-1</strong>: Router + Login (mock) + Dashboard (lijst/status) → Nieuwe declaratie (validatie/upload) → Detail (tijdlijn)</li>
+  <li><strong>Links</strong>: 
+    <a href="https://parsamhx.github.io/quintor-portfolio/" target="_blank" rel="noopener">Live</a> · 
+    <a href="https://github.com/parsamhx/quintor-portfolio" target="_blank" rel="noopener">Repo</a>
+  </li>
+</ul>
+
+<h2>Declaratieproces – Swimlane</h2>
+<div class="mermaid">
+flowchart TD
+  subgraph Werknemer
+    A["Start / Login"] --> B["Open Declaratiepagina"]
+    B --> C["Kies categorie"]
+    C --> D["Voeg beschrijving toe"]
+    D --> E["Upload bewijs (foto/bestand)"]
+    E --> F["Verstuur declaratie"]
+  end
+
+  subgraph Manager
+    F --> G["Ontvangen in manageroverzicht"]
+    G --> H{"Manager keurt goed?"}
+    H -->|Ja| I["Stuur door naar Office"]
+    H -->|Nee| J["Afkeurbericht naar Werknemer"]
+  end
+
+  subgraph Office
+    I --> K{"Meer info nodig?"}
+    K -->|Nee| L["Registreer en stuur door naar Finance"]
+    K -->|Ja| M["Vraag aanvullende info"]
+  end
+
+  subgraph "Werknemer aanvullen"
+    M --> N["Voeg gevraagde info toe"]
+    N --> I
+  end
+
+  subgraph Finance
+    L --> O["Verwerk op loonstrook"]
+    O --> P["Einde"]
+  end
+
+  J --> Q["Werknemer ontvangt afkeurbericht"]
+</div>
+
+
+
+    <h2>Definition of Ready (DoR)</h2>
+    <ul>
+      <li>Probleem &amp; doel duidelijk</li>
+      <li>Rollen bekend (Werknemer, Manager, Office, Finance)</li>
+      <li>Statusmodel afgesproken</li>
+      <li>Acceptatiecriteria per feature genoteerd</li>
+      <li>Wireframe of schets aanwezig</li>
+    </ul>
+
+<h2>Definition of Done (DoD)</h2>
+
+<ul>
+  <li><strong>Functioneel</strong>
+    <ul>
+      <li>Happy path werkt end-to-end (bijv. inloggen → overzicht → detail).</li>
+      <li>Validaties actief (verplichte velden, bedrag &gt; 0, datum logischer, upload type/size).</li>
+      <li>Alle acceptance criteria van de user story zijn afgevinkt.</li>
+    </ul>
+  </li>
+
+  <li><strong>Kwaliteit</strong>
+    <ul>
+      <li>Geen console-errors; waarschuwingen zijn verklaard of opgelost.</li>
+      <li>ESLint/Prettier draaien schoon (of max. enkele gelogde uitzonderingen).</li>
+      <li>Geen dode code / ongebruikte bestanden.</li>
+    </ul>
+  </li>
+
+  <li><strong>UX &amp; Toegankelijkheid</strong>
+    <ul>
+      <li>Responsief (mobiel/tablet/desktop) en bruikbaar met toetsenbord.</li>
+      <li>Labels, aria-attributen en zichtbare focus-states aanwezig.</li>
+      <li>Contrast en leesbaarheid voldoen aan WCAG 2.1 AA (globale check).</li>
+    </ul>
+  </li>
+
+  <li><strong>Security &amp; Privacy (client)</strong>
+    <ul>
+      <li>Invoer gesanitized (XSS-basis); geen gevoelige data in URL’s of logs.</li>
+      <li>Uploads: type/size gecontroleerd; fouten geven duidelijke melding.</li>
+      <li>Geen secrets in de repo; alleen HTTPS-links.</li>
+    </ul>
+  </li>
+
+  <li><strong>Performance (light)</strong>
+    <ul>
+      <li>Assets onnodig groot voorkomen (gecomprimeerde afbeeldingen).</li>
+      <li>Initieel scherm laadt zonder merkbare haperingen.</li>
+    </ul>
+  </li>
+
+  <li><strong>Documentatie</strong>
+    <ul>
+      <li>README bevat run-stappen, structuur, links naar live/demo.</li>
+      <li>Korte changelog of release-notitie per sprint (wat is opgeleverd?).</li>
+    </ul>
+  </li>
+
+  <li><strong>Code &amp; Deploy</strong>
+    <ul>
+      <li>Code staat op <code>main</code>; build/Pages publicatie is groen.</li>
+      <li>.gitignore aanwezig; map-structuur netjes.</li>
+    </ul>
+  </li>
+
+
+    <h2>Risico’s &amp; Aannames</h2>
+    <ul>
+      <li>Aanname: Finance-stappen moeten nog bevestigd worden</li>
+      <li>Risico: onduidelijke richtlijnen → actie: vragenlijst naar opdrachtgever</li>
+      <li>Risico: SSO niet beschikbaar → actie: tijdelijk mock-login</li>
+      <li>Risico: te veel scope → actie: MVP strak houden (indienen/keuren)</li>
+    </ul>
+
+    <h2>Wireframes (linkjes)</h2>
+    <p>
+      <a href="https://github.com/parsamhx/quintor-portfolio/blob/main/Screenshot%202025-09-09%20155242.png" target="_blank" rel="noopener">Inloggen (screenshot)</a> ·
+      <a href="https://github.com/parsamhx/quintor-portfolio/blob/main/Screenshot%202025-09-09%20155302.png" target="_blank" rel="noopener">Account aanmaken (screenshot)</a>
+    </p>
+
+    <h2>Zelfbeoordeling</h2>
+    <ul>
+      <li><strong>Kwantiteit</strong> – Op Niveau (visie + statusmodel + swimlane + DoR/DoD)</li>
+      <li><strong>Kwaliteit</strong> – Op Niveau (helder en consistent)</li>
+      <li><strong>Portfolio</strong> – Op Niveau (Pages live, theming, diagram)</li>
+      <li><strong>Professionele Houding</strong> – Op Niveau (afspraken vastgelegd, risico’s benoemd)</li>
+    </ul>
+
+    <h2>Sprint 1 – Plan</h2>
+    <ol>
+      <li>Router + Login (mock) + Dashboard met lijst en statusbadges</li>
+      <li>Nieuwe declaratie (validatie + upload)</li>
+      <li>Detailpagina met tijdlijn (read-only)</li>
+    </ol>
+
+    <h2>Links</h2>
+    <ul>
+      <li>Repository: <a href="https://github.com/parsamhx/quintor-portfolio" target="_blank" rel="noopener">https://github.com/parsamhx/quintor-portfolio</a></li>
+      <li>GitHub Pages (deze site): <a href="https://parsamhx.github.io/quintor-portfolio/" target="_blank" rel="noopener">https://parsamhx.github.io/quintor-portfolio/</a></li>
+    </ul>
+  </main>
+</body>
+</html>
